@@ -1,8 +1,48 @@
-# Welcome to your CDK TypeScript project
+# Simple NestJS Lambda-lith
 
-This is a blank project for CDK development with TypeScript.
+This code repository shows you how you can use NestJS as a lambda-lith fronted by API GW.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+![](./docs/api-gw-lambda-nestjs.png)
+
+### Setting up your environment
+
+In your terminal, set the URL where your API GW is running in a variable.
+
+```
+URL=https://v9aworvsb2.execute-api.eu-central-1.amazonaws.com/prod
+```
+
+### Adding / Updating a customer
+
+```
+curl -s -X POST $URL/customers \
+-H 'Content-Type: application/json' \
+-d '{
+    "id":"123",
+    "firstName":"John",
+    "lastName":"Doe",
+    "email": "jdoe@acmecorp.com",
+    "customerType": "SIMPLE"
+}'
+```
+
+### Retrieving a customer
+
+```
+curl -s $URL/customers/123
+```
+
+### Retrieving all customers
+
+```
+curl -s $URL/customers
+```
+
+### Removing a cusomter
+
+```
+curl -s -X DELETE $URL/customers/123
+```
 
 ## Useful commands
 
