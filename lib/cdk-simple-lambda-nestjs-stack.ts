@@ -71,11 +71,10 @@ export class CdkSimpleLambdaNestjsStack extends cdk.Stack {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' }
     });
 
-    // Define a catch-all route that proxies all requests to the Lambda function
-    //api.root.addMethod('ANY', integration); // Catch-all for the root path
     const proxyResource = restApi.root.addResource('{proxy+}'); // Catch-all for any subpath
-    proxyResource.addMethod('ANY', integration); // ANY method (GET, POST, PUT, DELETE, etc.)
-  
+    //proxyResource.addMethod('ANY', integration); // ANY method (GET, POST, PUT, DELETE, etc.)
+    proxyResource.addMethod('ANY',new apigateway.LambdaIntegration(nestJsLambda));
+
     
     // Output the Lambda function ARN
     new cdk.CfnOutput(this, 'LambdaFunctionARN', {
