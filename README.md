@@ -4,12 +4,37 @@ This code repository shows you how you can use NestJS as a lambda-lith fronted b
 
 ![](./docs/api-gw-lambda-nestjs.png)
 
-### Setting up your environment
+It actually deploys 3 different types of APIs using API Gateway
+
+- API Gateway (v2) HTTP API with a default route
+- API Gateway (v2) HTTP API with a prefixed route
+- API Gateway REST API
+
+The NestJS backend uses the [serverless-express](https://www.npmjs.com/package/@vendia/serverless-express) module to wrap our NestJS backend in a lambda.
+
+The repo also includes a simple very simple NesTJS backend exposing CRUD methods for a customer resource.
+
+
+### Deploy the infrastructure
+
+Via the CDK we can deploy the entire stack using `cdk deploy`
+
+### Test the APIs
 
 In your terminal, set the URL where your API GW is running in a variable.
 
 ```
 URL=https://v9aworvsb2.execute-api.eu-central-1.amazonaws.com/prod
+```
+
+You can find the API GW url in the outputs after running `cdk deploy` in the `CdkSimpleLambdaNestjsStack.ApiGatewayURL` output variable.
+
+```
+Outputs:
+CdkSimpleLambdaNestjsStack.ApiGatewayURL = https://v9aworvsb2.execute-api.eu-central-1.amazonaws.com/prod/
+CdkSimpleLambdaNestjsStack.CustomerLambdaApiEndpointCB676013 = https://v9aworvsb2.execute-api.eu-central-1.amazonaws.com/prod/
+CdkSimpleLambdaNestjsStack.DynamoDBTableName = CdkSimpleLambdaNestjsStack-CustomerTable260DCC08-1GKLW14IKHXSH
+CdkSimpleLambdaNestjsStack.LambdaFunctionARN = arn:aws:lambda:eu-central-1:949508759827:function:CdkSimpleLambdaNestjsStac-CustomerCrudLambda8EA505-XrehtQH1E22M
 ```
 
 ### Adding / Updating a customer

@@ -1,31 +1,38 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
-import { Server } from 'http';
-import { Handler } from 'aws-lambda';
-import { createServer, proxy } from 'aws-serverless-express';
-import * as express from 'express';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import serverlessExpress from '@vendia/serverless-express';
+import { Context, Handler } from 'aws-lambda';
+import express from 'express';
 
-const server = express();
+import { AppModule } from './app.module';
+
+let cachedServer: Handler;
 
 async function bootstrap() {
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(server));
-  app.useGlobalPipes(new ValidationPipe());
-  //await app.listen(3000);
-  await app.init();
-  return createServer(server);
+  if (!cachedServer) {
+    const expressApp = express();
+    const nestApp = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(expressApp),
+    );
+
+    
+    // If you are exposing your API using a prefix, make sure to also include the prefix here.
+    //nestApp.setGlobalPrefix('api');
+
+    nestApp.enableCors();
+
+    await nestApp.init();
+
+    cachedServer = serverlessExpress({ app: expressApp });
+  }
+
+  return cachedServer;
 }
 
-//bootstrap();
+export const handler = async (event: any, context: Context, callback: any) => {
+  console.log("Intercepting event ", JSON.stringify(event))
+  const server = await bootstrap();
 
-let cachedServer: Server;
-
-export const handler: Handler = async (event, context) => {
-  if (!cachedServer) {
-    cachedServer = await bootstrap();
-  }
-  return proxy(cachedServer, event, context, 'PROMISE').promise;
+  return server(event, context, callback);
 };

@@ -3,6 +3,9 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as apigatewayv2 from '@aws-cdk/aws-apigatewayv2-alpha';
+import {HttpLambdaIntegration} from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
+
 import * as path from 'path';
 import { execSync } from 'child_process';
 
@@ -45,10 +48,23 @@ export class CdkSimpleLambdaNestjsStack extends cdk.Stack {
 
 
     // Define the API Gateway
-    const api = new apigateway.RestApi(this, 'CustomerLambdaApi', {
-      restApiName: 'Customer Service',
-      description: 'This service serves customers.'
+    const httpApi = new apigatewayv2.HttpApi(this, 'NestJsHttpApi', {
+      defaultIntegration: new HttpLambdaIntegration('SomeLambdaIntegration', nestJsLambda),
     });
+
+
+    // Define the API Gateway with a custom path
+    const customPathApi = new apigatewayv2.HttpApi(this, 'CustomPathNestJsHttpApi');
+
+    customPathApi.addRoutes({
+      path: '/api/{proxy+}',
+      methods: [apigatewayv2.HttpMethod.ANY],
+      integration: new HttpLambdaIntegration('LambdaIntegration', nestJsLambda),
+    });
+
+    const restApi = new apigateway.RestApi(this, 'CustomerLambdaApi', {
+        restApiName: 'NestJS REST API'
+      });
 
     // Integrate API Gateway with Lambda
     const integration = new apigateway.LambdaIntegration(nestJsLambda, {
@@ -56,8 +72,8 @@ export class CdkSimpleLambdaNestjsStack extends cdk.Stack {
     });
 
     // Define a catch-all route that proxies all requests to the Lambda function
-    api.root.addMethod('ANY', integration); // Catch-all for the root path
-    const proxyResource = api.root.addResource('{proxy+}'); // Catch-all for any subpath
+    //api.root.addMethod('ANY', integration); // Catch-all for the root path
+    const proxyResource = restApi.root.addResource('{proxy+}'); // Catch-all for any subpath
     proxyResource.addMethod('ANY', integration); // ANY method (GET, POST, PUT, DELETE, etc.)
   
     
@@ -71,8 +87,16 @@ export class CdkSimpleLambdaNestjsStack extends cdk.Stack {
       value: table.tableName,
     });
 
-    new cdk.CfnOutput(this, 'ApiGatewayURL', {
-      value: api.url,
+    new cdk.CfnOutput(this, 'HttpApiGatewayURL', {
+      value: httpApi.url!,
+    });
+
+    new cdk.CfnOutput(this, 'CustomPathApiGatewayURL', {
+      value: customPathApi.url!,
+    });
+
+    new cdk.CfnOutput(this, 'RestApiGatewayURL', {
+      value: restApi.url!,
     });
 
 
